@@ -239,7 +239,7 @@
                 <i class="fa-solid fa-address-card text-3xl"></i>
             </div>
             <h1 class="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">Formulir Data Diri Nasabah Deposito</h1>
-            <p class="mt-2 text-slate-600">Lengkapi data diri, Foto KTP, dan Tangan Tangan Anda di bawah ini dengan benar ya.</p>
+            <p class="mt-2 text-slate-600">Lengkapi data diri, Foto KTP, dan Tanda Tangan Anda di bawah ini dengan benar ya.</p>
         </header>
 
         <!-- FORM SECTION -->
@@ -249,7 +249,7 @@
                 <!-- PasFoto Section -->
                 <div>
                     <h2 class="text-xl font-bold text-slate-900 mb-4 flex items-center gap-2">
-                        <i class="fa-solid fa-camera text-brand-600"></i> Foto KTP / Pasfoto KTP
+                        <i class="fa-solid fa-camera text-brand-600"></i> Foto KTP / Pasfoto KTP <span class="text-red-500">*</span>
                     </h2>
                     <div class="flex flex-col sm:flex-row items-center gap-6 p-4 bg-slate-50 rounded-xl border border-dashed border-slate-300">
                         <div class="relative w-32 h-40 bg-slate-200 rounded-lg overflow-hidden flex items-center justify-center border border-slate-300 shadow-inner group">
@@ -493,8 +493,10 @@
                             <label class="block text-sm font-medium text-slate-700 mb-1">Nominal Deposito <span class="text-red-500">*</span></label>
                             <div class="relative">
                                 <span class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 text-sm font-medium">Rp</span>
-                                <input type="text" id="depositAmount" required inputmode="numeric" placeholder="0" oninput="formatRupiah(this); updateDepositWords()" class="w-full pl-11 pr-4 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none transition-all">
+                                <input type="text" id="depositAmount" required inputmode="numeric" placeholder="Minimal 1.000.000" oninput="formatRupiah(this); updateDepositWords()" class="w-full pl-11 pr-4 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none transition-all">
                             </div>
+                            <p class="text-xs text-slate-500 mt-1">Minimal Rp 1.000.000</p>
+                            <p id="depositAmountError" class="text-xs text-red-500 mt-1 hidden font-medium">Nominal deposito minimal Rp 1.000.000.</p>
                         </div>
 
                         <!-- Terbilang (otomatis dari nominal) -->
@@ -538,12 +540,12 @@
                         <!-- Perpanjangan -->
                         <div class="md:col-span-2">
                             <label class="block text-sm font-medium text-slate-700 mb-2">Perpanjangan</label>
-                            <label class="flex items-center gap-3 px-4 py-3 rounded-lg border border-slate-300 cursor-pointer hover:bg-slate-50 transition-colors">
-                                <input type="checkbox" id="depositRoll" class="w-4 h-4 accent-blue-600">
+                            <div class="flex items-center gap-3 px-4 py-3 rounded-lg border border-slate-300 bg-slate-50">
+                                <i class="fa-solid fa-circle-check text-brand-600"></i>
                                 <span class="text-sm font-medium text-slate-700">Otomatis (Automatic Roll Over)</span>
-                            </label>
+                            </div>
                         </div>
-
+                        
                         <!-- Pembayaran Bunga -->
                         <div class="md:col-span-2">
                             <label class="block text-sm font-medium text-slate-700 mb-2">Pembayaran Bunga <span class="text-red-500">*</span></label>
@@ -942,11 +944,6 @@
                                 </ol>
                             </div>
 
-                            <div id="reviewStmtArisan" class="hidden">
-                                <p>Bahwa saya telah mengerti dan memahami dengan seluruh ketentuan tabungan arisan di PT. BPR ARAYA ARTA maka dengan ini saya menyatakan bersedia menjadi anggota tabungan arisan di PT. BPR ARAYA ARTA. Saya bersedia dan saya mendaftarkan diri untuk mengikuti sebanyak <b id="reviewArisanCount" class="text-slate-800"></b> nomor kepesertaan.</p>
-                            </div>
-                        </div>
-
                         <!-- Baris tanda tangan: pihak bank (kiri) + pemohon (kanan) -->
                         <div class="sign-row">
                             <!-- Tanda Tangan Pihak Bank -->
@@ -1255,15 +1252,7 @@
                 ? 'Lainnya: ' + document.getElementById(otherId).value.trim()
                 : val;
         }
-            // Pernyataan arisan menggantikan pernyataan umum
-            function toggleArisan() {
-                const checked = document.getElementById('productArisan').checked;
-                document.getElementById('stmtStandard').classList.toggle('hidden', checked);
-                document.getElementById('stmtArisan').classList.toggle('hidden', !checked);
-                const count = document.getElementById('arisanCount');
-                count.required = checked;
-                if (!checked) count.value = '';
-        }
+        
         // Perkecil foto agar ringan dikirim (maks 1200px, JPEG kualitas 80%)
         function compressImage(dataUrl, maxSize, type = 'image/jpeg') {
             return new Promise(resolve => {
@@ -1301,6 +1290,7 @@
 
         // Isi kolom Terbilang otomatis dari Nominal Deposito
         function updateDepositWords() {
+            document.getElementById('depositAmountError').classList.add('hidden');
             const digits = document.getElementById('depositAmount').value.replace(/\D/g, '');
             const n = digits ? parseInt(digits, 10) : 0;
             document.getElementById('depositWords').value = n > 0 ? terbilang(n) + ' Rupiah' : '';
@@ -1365,6 +1355,14 @@
                 pe.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 return;
             }
+            
+            // Validasi nominal deposito minimal Rp 1.000.000
+            const depositDigits = document.getElementById('depositAmount').value.replace(/\D/g, '');
+            if (!depositDigits || parseInt(depositDigits, 10) < 1000000) {
+                document.getElementById('depositAmountError').classList.remove('hidden');
+                document.getElementById('depositAmount').scrollIntoView({ behavior: 'smooth', block: 'center' });
+                return;
+            }
 
             // Validate Signature
             if (!isSigned) {
@@ -1414,7 +1412,7 @@
             const depositTerm      = document.querySelector('input[name="depositTerm"]:checked').value;
             const depositRateRaw   = document.getElementById('depositRate').value.trim();
             const depositRate      = depositRateRaw ? depositRateRaw + ' % per Tahun' : '-';
-            const depositRoll      = document.getElementById('depositRoll').checked ? 'Otomatis (Automatic Roll Over)' : '-';
+            const depositRoll      = 'Otomatis (Automatic Roll Over)';
             const interestPay      = getInterestPayment();
 
             // Data spesimen tanda tangan
@@ -1660,16 +1658,14 @@ kirimKeMasterData({
         }
 
         function editForm() {
-        submissionId = null;
-        document.getElementById('specimenSection').classList.add('hidden');
-        document.getElementById('reviewSection').classList.add('hidden');
-        document.getElementById('formSection').classList.remove('hidden');
-        requestAnimationFrame(() => {
-            resizeCanvas();
-            if (document.getElementById('specJenisNasabah').value === 'Perusahaan') sizeCanvas2();
-        });
+            submissionId = null;
+            document.getElementById('specimenSection').classList.add('hidden');
+            document.getElementById('reviewSection').classList.add('hidden');
+            document.getElementById('formSection').classList.remove('hidden');
+            requestAnimationFrame(() => {
+                resizeCanvas();
+            });
         window.scrollTo({ top: 0, behavior: 'smooth' });
-
     }
     </script>
 </body>
