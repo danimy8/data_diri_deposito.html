@@ -263,9 +263,10 @@
                             <label for="photoInput" class="inline-flex items-center gap-2 px-4 py-2 bg-white border border-slate-300 rounded-lg text-sm font-semibold text-slate-700 hover:bg-slate-50 cursor-pointer shadow-sm transition-colors">
                                 <i class="fa-solid fa-upload text-brand-600"></i> Pilih Foto
                             </label>
-                            <input type="file" id="photoInput" accept="image/*" class="hidden" onchange="previewImage(event)" required>
+                            <input type="file" id="photoInput" accept="image/*" class="hidden" onchange="previewImage(event)">
                             <p class="text-xs text-slate-500">Gunakan format JPG, PNG, atau WEBP. Ukuran file disarankan di bawah 2MB.</p>
                             <button type="button" id="removePhotoBtn" onclick="removePhoto()" class="hidden text-xs text-red-600 hover:underline font-medium">Hapus Foto</button>
+                            <p id="photoError" class="text-xs text-red-500 hidden font-medium">Foto KTP wajib diupload ya!</p>
                         </div>
                     </div>
                 </div>
@@ -719,6 +720,8 @@
 
             <!-- REVIEW / BIODATA CARD SECTION (HIDDEN BY DEFAULT) -->
             <div id="reviewSection" class="hidden">
+            <div id="saveStatus" class="no-print hidden mb-4 p-4 rounded-xl border text-sm font-medium"></div>
+                
                 <!-- Review Actions Bar (No Print) -->
                 <div class="mb-6 flex flex-wrap items-center justify-between gap-4 no-print bg-white p-4 rounded-xl shadow-md border border-slate-100">
                     <button onclick="editForm()" class="inline-flex items-center gap-2 px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-lg transition-colors text-sm">
@@ -1041,21 +1044,26 @@
         let uploadedPhotoBase64 = '';
         let stampBase64 = '';
         let isSigned = false;
+        let isSigned2 = false;
+        let lastPayload = null;
+        let isSubmitting = false;
+        let submissionId = null;
         
         const API_URL = "https://script.google.com/macros/s/AKfycbwnX680ihHaIcaOvo5Rm6IcBNaWYwAdCUFwhMNmYyrXmQHRNi9knd8GQVlKTgrpH4nKCw/exec";
         async function kirimKeMasterData(data) {
-        try {
-            await fetch(API_URL, {
-                method: "POST",
-                body: JSON.stringify({
-                    action: "create",
-                    data: data
-                }),
-            });
-        } catch (err) {
-            console.error("Gagal mengirim ke master data:", err);
+            lastPayload = data;
+            try {
+                const res = await fetch(API_URL, {
+                    method: "POST",
+                    body: JSON.stringify({ action: "create", data: data }),
+                });
+                const hasil = await res.json();
+                return hasil.success === true;
+            } catch (err) {
+                console.error("Gagal mengirim ke master data:", err);
+                return false;
+            }
         }
-    }
         // Canvas Setup
         const canvas = document.getElementById('signatureCanvas');
         const ctx = canvas.getContext('2d');
@@ -1143,21 +1151,73 @@
             isSigned = false;
         }
 
-        function previewImage(event) {
-            const file = event.target.files[0];
-            if (file) {
+            const MAX_IMG_MB = 5;
+            const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+
+            function validateImageFile(file) {
+                return new Promise(resolve => {
+                    if (!ALLOWED_TYPES.includes(file.type)) return resolve('Format harus JPG, PNG, atau WEBP.');
+                    if (file.size > MAX_IMG_MB * 1024 * 1024) {
+                        return resolve('Ukuran file maksimal ' + MAX_IMG_MB + 'MB (file Anda ' + (file.size / 1048576).toFixed(1) + 'MB).');
+                    }
+                    const url = URL.createObjectURL(file);
+                    const img = new Image();
+                    img.onload = () => { URL.revokeObjectURL(url); resolve(''); };
+                    img.onerror = () => { URL.revokeObjectURL(url); resolve('File gambar rusak atau tidak bisa dibaca.'); };
+                    img.src = url;
+                });
+            }
+
+            async function previewImage(event) {
+                const file = event.target.files[0];
+                if (!file) return;
+                const errEl = document.getElementById('photoError');
+                const err = await validateImageFile(file);
+                if (err) {
+                    removePhoto();
+                    errEl.textContent = err;
+                    errEl.classList.remove('hidden');
+                    return;
+                }
                 const reader = new FileReader();
-                reader.onload = function(e) {
+                reader.onload = function (e) {
                     uploadedPhotoBase64 = e.target.result;
                     const preview = document.getElementById('photoPreview');
                     preview.src = uploadedPhotoBase64;
                     preview.classList.remove('hidden');
                     document.getElementById('photoPlaceholder').classList.add('hidden');
                     document.getElementById('removePhotoBtn').classList.remove('hidden');
+                    errEl.classList.add('hidden');
                 };
                 reader.readAsDataURL(file);
             }
-        }
+
+            async function previewStamp(event) {
+                const input = event.target;
+                const file = input.files[0];
+                if (!file) return;
+                const errEl = document.getElementById('stampError');
+                const err = await validateImageFile(file);
+                if (err) {
+                    input.value = '';
+                    stampBase64 = '';
+                    document.getElementById('stampPreview').classList.add('hidden');
+                    document.getElementById('stampPlaceholder').classList.remove('hidden');
+                    errEl.textContent = err;
+                    errEl.classList.remove('hidden');
+                    return;
+                }
+                const reader = new FileReader();
+                reader.onload = e => {
+                    stampBase64 = e.target.result;
+                    const img = document.getElementById('stampPreview');
+                    img.src = stampBase64;
+                    img.classList.remove('hidden');
+                    document.getElementById('stampPlaceholder').classList.add('hidden');
+                    errEl.classList.add('hidden');
+                };
+                reader.readAsDataURL(file);
+            }
 
         function removePhoto() {
             uploadedPhotoBase64 = '';
@@ -1294,7 +1354,17 @@
         }
         
         async function handleFormSubmit(event) {
+            
             event.preventDefault();
+            if (isSubmitting) return;
+
+            if (!uploadedPhotoBase64) {
+                const pe = document.getElementById('photoError');
+                pe.textContent = 'Foto KTP wajib diupload ya!';
+                pe.classList.remove('hidden');
+                pe.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                return;
+            }
 
             // Validate Signature
             if (!isSigned) {
@@ -1305,7 +1375,7 @@
 
             //Validasi khusus Perusahaan : tanda tangan ke-2 wajib
             if (document.getElementById('specJenisNasabah').value === 'Perusahaan' && !isSigned2) {
-                document.getElemenById('sig2Error').classList.remove('hidden');
+                document.getElementById('sig2Error').classList.remove('hidden');
                 canvas2.scrollIntoView({ behavior: 'smooth', block: 'center'});
                 return;
             }
@@ -1351,11 +1421,27 @@
             const specJenis    = document.getElementById('specJenisNasabah').value;
             const isPerusahaan = specJenis === 'Perusahaan';
             const specNorek    = document.getElementById('specNoRekInput').value.trim() || '-';
-            const specNamaPer  = IsPerusahaan ? document.getElementById('specNamaPerusahaan').value.trim() : '-';
-            const specDireksi1 = IsPerusahaan ? document.getElementById('specDireksi1').value.trim() : '-';
-            const specDireksi2 =IsPerusahaan ? document.getElementById('specDireksi2').value.trim() : '-';
+            const specNamaPer  = isPerusahaan ? document.getElementById('specNamaPerusahaan').value.trim() : '-';
+            const specDireksi1 = isPerusahaan ? document.getElementById('specDireksi1').value.trim() : '-';
+            const specDireksi2 =isPerusahaan ? document.getElementById('specDireksi2').value.trim() : '-';
+
+            isSubmitting = true;
+            if (!submissionId) {
+                submissionId = (crypto.randomUUID && crypto.randomUUID()) || (Date.now() + '-' + Math.random().toString(36).slice(2));
+            }
+            const fotoKtpKecil = await compressImage(uploadedPhotoBase64, 1200);
+            if (!fotoKtpKecil) {
+                isSubmitting = false;
+                const pe = document.getElementById('photoError');
+                pe.textContent = 'Foto gagal diproses. Coba pilih ulang foto (JPG/PNG).';
+                pe.classList.remove('hidden');
+                pe.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                return;
+            }
+            tampilStatus('loading');
 
 kirimKeMasterData({
+    submissionId: submissionId,
     namaLengkap: fullName,
     nik: nik,
     tempatLahir: birthPlace,
@@ -1395,10 +1481,11 @@ kirimKeMasterData({
     direksi1: specDireksi1,
     direksi2: specDireksi2,
     tandaTangan2: isPerusahaan ? canvas2.toDataURL('image/png') : '',
-    capPerusahaan: isPerusahaan ? await compressImager(stampBase64, 800, 'image/png') : '',
-    fotoKtp: await compressImage(uploadedPhotoBase64, 1200),
+    capPerusahaan: isPerusahaan ? await compressImage(stampBase64, 800, 'image/png') : '',
+    fotoKtp: fotoKtpKecil,
     tandaTangan: canvas.toDataURL('image/png'),
-});
+}).then(ok => { tampilStatus(ok ? 'ok' : 'gagal'); isSubmitting = false; });
+            
             // Format Birth Date to ID format (e.g. 17 Agustus 1995)
             const formattedDate = new Date(birthDateVal).toLocaleDateString('id-ID', {
                 day: 'numeric',
@@ -1457,7 +1544,7 @@ kirimKeMasterData({
         }
 
         // ==== Pad tanda tangan Direksi 2 (khusus Perusahaan) ====
-        const canvas2 = document.getElemenById('sig2Canvas');
+        const canvas2 = document.getElementById('sig2Canvas');
         const ctx2 = canvas2.getContext('2d');
         let isDrawing2 = false;
 
@@ -1466,7 +1553,7 @@ kirimKeMasterData({
             if (!r.width) return;
             canvas2.width = r.width;
             canvas2.height = r.height;
-            ctx2.lineWidth = 2.5; ctx2.lineCap = 'round'; ctx2.loneJoin = 'round'; ctx2.strokeStyle = '#0f172a';
+            ctx2.lineWidth = 2.5; ctx2.lineCap = 'round'; ctx2.lineJoin = 'round'; ctx2.strokeStyle = '#0f172a';
             isSigned2 = false;
             document.getElementById('sig2Placeholder').classList.remove('hidden');
         }
@@ -1504,27 +1591,14 @@ kirimKeMasterData({
         canvas2.addEventListener('touchend', stop2);
 
         // ==== Upload cap / stempel ====
-        function previewStamp(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-            cont reader = new FileReader();
-            reader.onload = e => {
-                stampBas64 = e.target.result;
-                const img = document.getElementById('stampPreview');
-                img.src = stampBas64;
-                img.classList.remove('hidden');
-                document.getElementById('stampPlaceholder').classList.add('hidden');
-                documen.getElementById('stampError').classList.add('hidden');
-            };
-            reader.readAsDataURL(file);
-        }
+        
 
         // Tampilkan isian Perusahaan hanya jika jenis nasabah = Perusahaan
         function toggleSpesimen() {
             const perusahaan = document.getElementById('specJenisNasabah').value === 'Perusahaan';
             document.getElementById('specDireksiWrap').classList.toggle('hidden', !perusahaan);
             ['specNamaPerusahaan', 'specDireksi1', 'specDireksi2'].forEach(id => {
-                document.getElemetById(id).required = perusahaan;
+                document.getElementById(id).required = perusahaan;
             });
             if (perusahaan) sizeCanvas2();
         }
@@ -1533,18 +1607,18 @@ kirimKeMasterData({
         function isiSpesimen(namaNasabah, signatureDataUrl) {
             const v = id => document.getElementById(id).value.trim();
             const set = (id, text) => document.getElementById(id).innerText = text;
-            const show = (id, tampil) => document.getElementById(id).style.display = tampil ? '' : ''none;
+            const show = (id, tampil) => document.getElementById(id).style.display = tampil ? '' : 'none';
             const perusahaan = v('specJenisNasabah') === 'Perusahaan';
 
             set('specJenisOut', perusahaan ? 'Perusahaan' : 'Perorangan');
             set('specNamaLabel', perusahaan ? 'Nama Perusahaan' : 'Nama Nasabah');
-            set('specNama', perusahaan ? v('specNamaPerusahaan') : 'namaNasabah');
-            set('specNorek', v('specNoRekInput'));
+            set('specNama', perusahaan ? v('specNamaPerusahaan') : namaNasabah);
+            set('specNoRek', v('specNoRekInput'));
             set('specBertOut', perusahaan ? 'Perusahaan' : 'Nasabah');
             set('specKetOut', perusahaan ? 'Harus dua tanda tangan' : 'Satu tanda tangan');
             set('specDireksi1Out', perusahaan ? v('specDireksi1') : '');
             set('specDireksi2Out', perusahaan ? v('specDireksi2') : '');
-            set('specTanggal', new Date().toLocalDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }));
+            set('specTanggal', new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }));
 
             show('specDireksiRow1', perusahaan);
             show('specDireksiRow2', perusahaan);
@@ -1552,14 +1626,41 @@ kirimKeMasterData({
             show('specStampCell', perusahaan);
             document.getElementById('specBox').classList.toggle('single', !perusahaan);
 
-            document.getElementById('specSign1').src = signatureDataURL1;
+            document.getElementById('specSign1').src = signatureDataUrl;
             document.getElementById('specSign2').src = perusahaan ? canvas2.toDataURL('image/png') : '';
             const stampImg = document.getElementById('specStampImg');
             stampImg.src = (perusahaan && stampBase64) ? stampBase64 : '';
             stampImg.style.display = (perusahaan && stampBase64) ? '' : 'none';
         }
 
+        function tampilStatus(state) {
+            const box = document.getElementById('saveStatus');
+            box.className = 'no-print mb-4 p-4 rounded-xl border text-sm font-medium';
+            if (state === 'loading') {
+                box.classList.add('bg-amber-50', 'border-amber-200', 'text-amber-800');
+                box.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i> Menyimpan data...';
+            } else if (state === 'ok') {
+                box.classList.add('bg-emerald-50', 'border-emerald-200', 'text-emerald-800');
+                box.innerHTML = '<i class="fa-solid fa-circle-check mr-2"></i> Data berhasil tersimpan ya.';
+            } else {
+                box.classList.add('bg-red-50', 'border-red-200', 'text-red-800');
+                box.innerHTML =
+                    '<div class="flex flex-wrap items-center justify-between gap-3">' +
+                    '<span><i class="fa-solid fa-triangle-exclamation mr-2"></i> Data GAGAL tersimpan. Periksa koneksi internet, lalu kirim ulang.</span>' +
+                    '<button type="button" onclick="kirimUlang()" class="px-4 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded-lg text-xs font-semibold">Kirim Ulang</button>' +
+                    '</div>';
+            }
+        }
+
+        async function kirimUlang() {
+            if (!lastPayload) return;
+            tampilStatus('loading');
+            const ok = await kirimKeMasterData(lastPayload);
+            tampilStatus(ok ? 'ok' : 'gagal');
+        }
+
         function editForm() {
+        submissionId = null;
         document.getElementById('specimenSection').classList.add('hidden');
         document.getElementById('reviewSection').classList.add('hidden');
         document.getElementById('formSection').classList.remove('hidden');
