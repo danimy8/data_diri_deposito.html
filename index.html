@@ -619,12 +619,7 @@
                         Sesuai Peraturan Otoritas Jasa Keuangan No. 8 Tahun 2023 tentang APU PPT&amp;PPPSPM, khusus nasabah yang tidak memiliki rekening di BPR (Walk-In Customer) wajib memberikan keterangan berikut.
                     </p>
 
-                    <label class="flex items-start gap-3 cursor-pointer">
-                        <input type="checkbox" id="isWalkIn" onchange="toggleWalkIn()" class="mt-0.5 w-4 h-4 accent-blue-600">
-                        <span class="text-sm font-medium text-slate-700">Saya belum memiliki rekening di BPR (Walk-In Customer)</span>
-                    </label>
-
-                    <div id="walkInBox" class="hidden mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div id="walkInBox" class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
 
                     <!-- Jumlah Penghasilan -->
                     <div>
@@ -1008,7 +1003,7 @@
                                 </div>
 
                 <!-- Data Khusus Walk-In Customer (Review) -->
-                <div id="reviewWalkInWrap" class="mt-8 hidden">
+                <div id="reviewWalkInWrap" class="mt-8">
                     <h3 class="text-sm font-bold text-slate-700 uppercase tracking-wider mb-1">Data Khusus (Walk-In Customer)</h3>
                     <p class="text-[11px] text-slate-500 mb-3">Sesuai POJK No. 8 Tahun 2023 tentang APU PPT&amp;PPPSPM.</p>
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -1550,7 +1545,7 @@
             const specNamaPer  = isPerusahaan ? document.getElementById('specNamaPerusahaan').value.trim() : '-';
             const specDireksi1 = isPerusahaan ? document.getElementById('specDireksi1').value.trim() : '-';
             const specDireksi2 =isPerusahaan ? document.getElementById('specDireksi2').value.trim() : '-';
-            const isWalkIn = document.getElementById('isWalkIn').checked;
+            const isWalkIn = true;
             const wv = id => document.getElementById(id).value.trim();
             const wiIncome   = isWalkIn ? 'Rp ' + wv('wiIncome') + ' / ' + wv('wiIncomePeriod') : '-';
             const wiActivity = isWalkIn ? 'Rp ' + wv('wiActivity') + ' / ' + wv('wiActivityPeriod') : '-';
@@ -1668,7 +1663,6 @@ kirimKeMasterData({
             document.getElementById('reviewInterestPay').innerText = interestPay;
             document.getElementById('reviewOtherAccount').innerText = otherAccount;
             document.getElementById('reviewOtherAccountNo').innerText = otherAccountNo;
-            document.getElementById('reviewWalkInWrap').classList.toggle('hidden', !isWalkIn);
             document.getElementById('reviewWiIncome').innerText = wiIncome;
             document.getElementById('reviewWiActivity').innerText = wiActivity;
             document.getElementById('reviewWiOtherAcc').innerText = wiOtherAcc;
