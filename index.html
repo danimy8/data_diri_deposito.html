@@ -621,56 +621,77 @@
 
                     <div id="walkInBox" class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
 
-                    <!-- Jumlah Penghasilan -->
-                    <div>
-                        <label class="block text-sm font-medium text-slate-700 mb-1">Jumlah Penghasilan <span class="text-red-500">*</span></label>
-                        <div class="flex gap-2">
-                            <div class="relative flex-1">
-                                <span class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 text-sm font-medium">Rp</span>
-                                <input type="text" id="wiIncome" inputmode="numeric" oninput="formatRupiah(this)" placeholder="0" class="w-full pl-11 pr-3 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-brand-500 outline-none">
-                            </div>
-                            <select id="wiIncomePeriod" class="px-3 py-2.5 rounded-lg border border-slate-300 bg-white outline-none">
-                                <option value="Bulan">/ Bulan</option>
-                                <option value="Minggu">/ Minggu</option>
-                            </select>
-                        </div>
-                    </div>
+    <!-- Jumlah Penghasilan (OTOMATIS dari "Penghasilan per Bulan") -->
+    <div>
+        <label class="block text-sm font-medium text-slate-700 mb-1">
+            Jumlah Penghasilan <span class="text-xs font-normal text-slate-400">(otomatis)</span>
+        </label>
+        <div class="flex gap-2">
+            <input type="text" id="wiIncome" readonly
+                   placeholder="Terisi otomatis dari Penghasilan per Bulan"
+                   class="flex-1 px-4 py-2.5 rounded-lg border border-slate-300 bg-slate-100 text-slate-700 outline-none cursor-not-allowed">
+            <span class="px-3 py-2.5 rounded-lg border border-slate-300 bg-slate-100 text-slate-600 text-sm">/ Bulan</span>
+        </div>
+    </div>
 
-                    <!-- Aktivitas Transaksi Normal -->
-                    <div>
-                        <label class="block text-sm font-medium text-slate-700 mb-1">Aktivitas Transaksi Normal <span class="text-red-500">*</span></label>
-                        <div class="flex gap-2">
-                            <div class="relative flex-1">
-                                <span class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 text-sm font-medium">Rp</span>
-                                <input type="text" id="wiActivity" inputmode="numeric" oninput="formatRupiah(this)" placeholder="0" class="w-full pl-11 pr-3 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-brand-500 outline-none">
-                            </div>
-                            <select id="wiActivityPeriod" class="px-3 py-2.5 rounded-lg border border-slate-300 bg-white outline-none">
-                                <option value="Bulan">/ Bulan</option>
-                                <option value="Triwulan">/ Triwulan</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <!-- Rekening lain -->
-                    <div>
-                        <label class="block text-sm font-medium text-slate-700 mb-1">Rekening Lain yang Dimiliki</label>
-                        <input type="text" id="wiOtherAcc" placeholder="Nama bank (kosongkan jika tidak ada)" class="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-brand-500 outline-none">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-slate-700 mb-1">Nomor Rekening</label>
-                        <input type="text" id="wiOtherAccNo" inputmode="numeric" oninput="this.value=this.value.replace(/\D/g,'')" placeholder="Nomor rekening" class="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-brand-500 outline-none">
-                    </div>
-
-                    <div>
-                        <label class="block text-sm font-medium text-slate-700 mb-1">Tujuan Transaksi <span class="text-red-500">*</span></label>
-                        <input type="text" id="wiPurpose" placeholder="Contoh: Investasi deposito" class="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-brand-500 outline-none">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-slate-700 mb-1">Asal Sumber Dana <span class="text-red-500">*</span></label>
-                        <input type="text" id="wiFund" placeholder="Contoh: Hasil usaha" class="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-brand-500 outline-none">
-                    </div>
-                </div>
+    <!-- Aktivitas Transaksi Normal (MANUAL) -->
+    <div>
+        <label class="block text-sm font-medium text-slate-700 mb-1">Aktivitas Transaksi Normal <span class="text-red-500">*</span></label>
+        <div class="flex gap-2">
+            <div class="relative flex-1">
+                <span class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 text-sm font-medium">Rp</span>
+                <input type="text" id="wiActivity" required inputmode="numeric" oninput="formatRupiah(this)" placeholder="0" class="w-full pl-11 pr-3 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-brand-500 outline-none">
             </div>
+            <select id="wiActivityPeriod" class="px-3 py-2.5 rounded-lg border border-slate-300 bg-white outline-none">
+                <option value="Bulan">/ Bulan</option>
+                <option value="Triwulan">/ Triwulan</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- Opsi rekening lain -->
+    <div class="md:col-span-2">
+        <label class="block text-sm font-medium text-slate-700 mb-1">Apakah memiliki rekening di bank lain?</label>
+        <select id="wiHasOther" onchange="toggleWiOther()" class="w-full px-4 py-2.5 rounded-lg border border-slate-300 bg-white focus:ring-2 focus:ring-brand-500 outline-none">
+            <option value="Tidak">Tidak ada</option>
+            <option value="Ya">Ya, ada</option>
+        </select>
+    </div>
+
+    <!-- Rekening Lain & Nomor (OPSIONAL, muncul jika memilih "Ya") -->
+    <div id="wiOtherWrap" class="hidden md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+            <label class="block text-sm font-medium text-slate-700 mb-1">Rekening Lain yang Dimiliki <span class="text-xs font-normal text-slate-400">(opsional)</span></label>
+            <input type="text" id="wiOtherAcc" placeholder="Nama bank" class="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-brand-500 outline-none">
+        </div>
+        <div>
+            <label class="block text-sm font-medium text-slate-700 mb-1">Nomor Rekening <span class="text-xs font-normal text-slate-400">(opsional)</span></label>
+            <input type="text" id="wiOtherAccNo" inputmode="numeric" oninput="this.value=this.value.replace(/\D/g,'')" placeholder="Nomor rekening" class="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-brand-500 outline-none">
+        </div>
+    </div>
+
+    <!-- Tujuan Transaksi (OTOMATIS dari "Tujuan Pembukaan Rekening") -->
+    <div>
+        <label class="block text-sm font-medium text-slate-700 mb-1">
+            Tujuan Transaksi <span class="text-xs font-normal text-slate-400">(otomatis)</span>
+        </label>
+        <input type="text" id="wiPurpose" readonly
+               placeholder="Terisi otomatis dari Tujuan Pembukaan Rekening"
+               class="w-full px-4 py-2.5 rounded-lg border border-slate-300 bg-slate-100 text-slate-700 outline-none cursor-not-allowed">
+    </div>
+
+    <!-- Asal Sumber Dana (OTOMATIS dari "Asal Sumber Dana" di atas) -->
+    <div>
+        <label class="block text-sm font-medium text-slate-700 mb-1">
+            Asal Sumber Dana <span class="text-xs font-normal text-slate-400">(otomatis)</span>
+        </label>
+        <input type="text" id="wiFund" readonly
+               placeholder="Terisi otomatis dari Asal Sumber Dana"
+               class="w-full px-4 py-2.5 rounded-lg border border-slate-300 bg-slate-100 text-slate-700 outline-none cursor-not-allowed">
+    </div>
+</div>
+</div>                    
+                    
 
                 <!-- Pernyataan Nasabah -->
                 <div class="p-4 bg-slate-50 rounded-xl border border-slate-200">
@@ -1046,6 +1067,7 @@
                                     <li>Rekening saya diblokir, dan atau ditutup oleh Bank.</li>
                                     <li>Mempertanggungjawabkan secara hukum yang berlaku.</li>
                                 </ol>
+                                </div>
                             </div>
 
                         <!-- Baris tanda tangan: pihak bank (kiri) + pemohon (kanan) -->
@@ -1547,7 +1569,7 @@
             const specDireksi2 =isPerusahaan ? document.getElementById('specDireksi2').value.trim() : '-';
             const isWalkIn = true;
             const wv = id => document.getElementById(id).value.trim();
-            const wiIncome   = isWalkIn ? 'Rp ' + wv('wiIncome') + ' / ' + wv('wiIncomePeriod') : '-';
+            const wiIncome   = isWalkIn ? wv('wiIncome') + ' / Bulan' : '-';
             const wiActivity = isWalkIn ? 'Rp ' + wv('wiActivity') + ' / ' + wv('wiActivityPeriod') : '-';
             const wiOtherAcc   = isWalkIn ? (wv('wiOtherAcc') || '-') : '-';
             const wiOtherAccNo = isWalkIn ? (wv('wiOtherAccNo') || '-') : '-';
@@ -1800,7 +1822,36 @@ kirimKeMasterData({
             const ok = await kirimKeMasterData(lastPayload);
             tampilStatus(ok ? 'ok' : 'gagal');
         }
+        
+        // ===== Data Khusus: isi otomatis dari form di atasnya =====
+        function syncWalkIn() {
+            const val = id => document.getElementById(id).value.trim();
 
+            document.getElementById('wiIncome').value = val('income');
+
+            const purpose = getSelectOrOther('accountPurpose', 'accountPurposeOther');
+            document.getElementById('wiPurpose').value = purpose === 'Lainnya: ' ? '' : purpose;
+
+            const fund = getSelectOrOther('fundSource', 'fundSourceOther');
+            document.getElementById('wiFund').value = fund === 'Lainnya: ' ? '' : fund;
+        }
+
+        ['income', 'accountPurpose', 'accountPurposeOther', 'fundSource', 'fundSourceOther'].forEach(id => {
+            const el = document.getElementById(id);
+            el.addEventListener('input', syncWalkIn);
+            el.addEventListener('change', syncWalkIn);
+        });
+        syncWalkIn();
+
+        // Rekening lain: tampil hanya jika dipilih "Ya"
+        function toggleWiOther() {
+            const ya = document.getElementById('wiHasOther').value === 'Ya';
+            document.getElementById('wiOtherWrap').classList.toggle('hidden', !ya);
+            if (!ya) {
+                document.getElementById('wiOtherAcc').value = '';
+                document.getElementById('wiOtherAccNo').value = '';
+            }
+        }
         function editForm() {
             submissionId = null;
             document.getElementById('specimenSection').classList.add('hidden');
