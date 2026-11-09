@@ -228,6 +228,13 @@
                 .specimen-card, .specimen-card * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
             }
         
+            /* ===== Perbaikan: review muat 1 halaman ===== */
+            @media print {
+                .print-card { break-inside: auto !important; }
+                .print-card .print-footer { margin-top: 6px !important; }
+                .print-card .print-footer .print-banner { width: 70%; margin: 0 auto; }
+            }
+        
     </style>
 </head>
 <body class="min-h-screen text-slate-800 antialiased py-8 px-4 sm:px-6 lg:px-8">
