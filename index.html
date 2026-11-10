@@ -289,8 +289,7 @@
                     }
                     .print-card, .specimen-card { box-sizing: border-box; }
                     .print-card *, .specimen-card * { box-sizing: border-box; }
-                    .print-card img { max-width: 100%; }
-                    .print-card { zoom: 0.85; } 
+                    .print-card img { max-width: 100%; } 
                 }
        
                 /* ===== Teks panjang tidak boleh tembus kotak ===== */
@@ -298,6 +297,37 @@
                 .print-card span[id^="review"] {
                     overflow-wrap: anywhere;
                     word-break: break-word;
+                }
+
+                /* ===== CETAK: perbesar tulisan memanfaatkan ruang bawah ===== */
+                @media print {
+                    /* judul */
+                    .print-card h2 { font-size: 18px !important; }
+                    .print-card h3 { font-size: 11px !important; margin-bottom: 5px !important; }
+
+                    /* kotak data: lebih lega, tulisan lebih besar */
+                    .print-card .bg-slate-50 { padding: 6px 9px !important; }
+                    .print-card .bg-slate-50 > span:first-child { font-size: 8.5px !important; line-height: 11px !important; }
+                    .print-card .bg-slate-50 > span:last-child  { font-size: 11.5px !important; line-height: 15px !important; }
+
+                    /* jarak antar kotak dan antar blok */
+                    .print-card .md\:col-span-3 > .grid,
+                    .print-card > .mt-8 > .grid,
+                    .print-card div:not([class]) > .grid { gap: 5px !important; }
+                    .print-card > .mt-8 { margin-top: 10px !important; }
+
+                    /* teks panjang tetap di dalam kotak */
+                    .print-card .bg-slate-50 { min-width: 0; overflow: hidden; }
+
+                    /* catatan Data Khusus, pernyataan, tanda tangan */
+                    .print-card .wi-note { font-size: 9px !important; line-height: 1.35 !important; }
+                    .sign-section { margin-top: 10px !important; padding-top: 8px !important; }
+                    .sign-section .stmt-box { font-size: 9px !important; line-height: 1.4 !important; }
+                    .bank-sign-title { font-size: 10px !important; line-height: 13px !important; }
+                    .bank-sign-note { font-size: 8.5px !important; }
+                    .bank-sign-space { height: 48px !important; }
+                    .applicant-sign span { font-size: 9.5px !important; }
+                    .applicant-sign > div { width: 160px !important; height: 64px !important; }
                 }
         
     </style>
