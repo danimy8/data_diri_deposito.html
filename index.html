@@ -292,6 +292,13 @@
                     .print-card img { max-width: 100%; }
                     .print-card { zoom: 0.85; } 
                 }
+       
+                /* ===== Teks panjang tidak boleh tembus kotak ===== */
+                .print-card .bg-slate-50 { min-width: 0; }
+                .print-card span[id^="review"] {
+                    overflow-wrap: anywhere;
+                    word-break: break-word;
+                }
         
     </style>
 </head>
