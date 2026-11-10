@@ -165,7 +165,7 @@
             }
             .print-card > .mt-10 span { font-size: 8px !important; }
             .print-card > .mt-10 > div:last-child > div { width: 150px !important; height: 60px !important; }
-            .print-card { zoom: 0.9; }
+            
             }
         
             /* ===== TANDA TANGAN PIHAK BANK ===== */
@@ -241,7 +241,7 @@
                     @page { size: A4 portrait; margin: 6mm; }
 
                     /* perkecil seluruh kartu review */
-                    .print-card { zoom: 0.78 !important; break-inside: auto !important; }
+                    .print-card { break-inside: auto !important; }
 
                     /* header & banner bawah lebih ramping */
                     .print-card .print-header { margin-bottom: 4px !important; }
@@ -268,6 +268,29 @@
                     /* spesimen: tetap halaman sendiri, dan jangan sampai jadi 2 halaman */
                     .specimen-page { break-before: page !important; page-break-before: always !important; break-inside: avoid !important; }
                     .print-card .wi-note { font-size: 7.5px !important; line-height: 1.25 !important; margin-bottom: 3px !important; }
+                }
+
+                /* ===== Perbaikan potong kiri saat cetak ===== */
+                @media print {
+                    html, body {
+                        width: auto !important;
+                        margin: 0 !important;
+                        padding: 0 !important;
+                        overflow: visible !important;
+                    }
+                    .print-container,
+                    #reviewSection,
+                    #specimenSection {
+                        max-width: none !important;
+                        width: 100% !important;
+                        margin-left: 0 !important;
+                        margin-right: 0 !important;
+                        padding: 0 !important;
+                    }
+                    .print-card, .specimen-card { box-sizing: border-box; }
+                    .print-card *, .specimen-card * { box-sizing: border-box; }
+                    .print-card img { max-width: 100%; }
+                    .print-card { zoom: 0.85; } 
                 }
         
     </style>
