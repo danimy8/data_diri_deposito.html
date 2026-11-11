@@ -380,9 +380,9 @@
                     html body .print-card > .mt-8 { margin-top:6px !important; }
 
                     /* kotak data */
-                    html body .print-card .bg-slate-50 { padding:3px 6px !important; border-radius:4px !important; min-width:0; }
-                    html body .print-card .bg-slate-50 > span:first-child { font-size:7.5px !important; line-height:10px !important; }
-                    html body .print-card .bg-slate-50 > span:last-child  { font-size:10.5px !important; line-height:13px !important; }
+                    html body .print-card .bg-slate-50 { padding:4px 7px !important; border-radius:4px !important; min-width:0; }
+                    html body .print-card .bg-slate-50 > span:first-child { font-size:8.5px !important; line-height:11px !important; }
+                    html body .print-card .bg-slate-50 > span:last-child  { font-size:11.5px !important; line-height:14px !important; }
                     html body .print-card span[id^="review"] { overflow-wrap:anywhere; word-break:break-word; }
                     html body .print-card .wi-note { font-size:8.5px !important; line-height:1.3 !important; margin:0 0 3px 0 !important; }
  
@@ -407,6 +407,7 @@
                     html body #specimenSection .print-banner { display:block; width:100%; height:auto; }
                     html body #specimenSection .print-footer { display:block !important; margin-top:auto !important; padding-top:6px; }
                     html body #specimenSection .print-footer .print-banner { width:100% !important; margin:0 !important; }
+                    html body #specimenSection .print-footer { display:block !important; margin-top:14px !important; padding-top:0 !important; }
             </style>
         </head>
 <body class="min-h-screen text-slate-800 antialiased py-8 px-4 sm:px-6 lg:px-8">
@@ -2069,7 +2070,6 @@ kirimKeMasterData({
         const s = Math.min(1, PAGE_H / el.scrollHeight);
         el.style.zoom = s;
         el.style.width = (PAGE_W / s) + 'px';
-        el.style.minHeight = (PAGE_H / s) + 'px';
     }
     function resetWhole(el) {
         if (!el) return;
