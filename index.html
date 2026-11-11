@@ -1350,18 +1350,26 @@
         const API_URL = "https://script.google.com/macros/s/AKfycbwnX680ihHaIcaOvo5Rm6IcBNaWYwAdCUFwhMNmYyrXmQHRNi9knd8GQVlKTgrpH4nKCw/exec";
         async function kirimKeMasterData(data) {
             lastPayload = data;
-            try {
-                const res = await fetch(API_URL, {
-                    method: "POST",
-                    body: JSON.stringify({ action: "create", data: data }),
-                });
-                const hasil = await res.json();
-                return hasil.success === true;
-            } catch (err) {
-                console.error("Gagal mengirim ke master data:", err);
-                return false;
-            }
+            const ctrl = new AbortController();
+            const timer = setTimeout(() => ctrl.abort(), 45000);
+        try {
+            const res = await fetch(API_URL, {
+                method: "POST",
+                headers: { "Content-Type": "text/plain;charset=utf-8" },
+                body: JSON.stringify({ action: "create", data: data }),
+                signal: ctrl.signal
+            });
+            const teks = await res.text();
+            console.log("Balasan server:", res.status, teks.slice(0, 300));
+            const hasil = JSON.parse(teks);
+            return hasil.success === true;
+        } catch (err) {
+            console.error("Gagal mengirim ke master data:", err);
+            return false;
+        } finally {
+            clearTimeout(timer);
         }
+    }
         // Canvas Setup
         const canvas = document.getElementById('signatureCanvas');
         const ctx = canvas.getContext('2d');
