@@ -2057,12 +2057,24 @@ kirimKeMasterData({
         if (!top.length) return;
         card.style.width = PAGE_W + 'px';
         card.style.minHeight = '0';
-        const r = card.getBoundingClientRect();
-        const topH = top[top.length - 1].getBoundingClientRect().bottom - r.top;
-        const bottomH = r.height - topH;
-        const s = Math.min(1, Math.max(0.5, (PAGE_H - bottomH) / topH));
-        top.forEach(el => { el.style.zoom = s; el.style.width = (PAGE_W / s) + 'px'; });
-        card.style.minHeight = PAGE_H + 'px';
+
+        const apply = s => top.forEach(el => {
+            el.style.zoom = s;
+            el.style.width = (PAGE_W / s) + 'px';
+        });
+        const fits = () => card.getBoundingClientRect().height <= PAGE_H;
+
+        apply(1);
+        if (!fits()) {
+            let lo = 0.5, hi = 1;
+            for (let i = 0; i < 12; i++) {
+                const mid = (lo + hi) / 2;
+                apply(mid);
+                if (fits()) lo = mid; else hi = mid;
+            }
+            apply(lo);
+        }
+        card.style.minHeight = PAGE_H + 'px';   // banner bawah tetap di dasar halaman
     }
     function fitWhole(el) {
         if (!el || !el.getClientRects().length) return;
