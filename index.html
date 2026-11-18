@@ -433,6 +433,7 @@
                     html body .print-card .sign-section { border-top:1px solid #000 !important; }
                         
             </style>
+            <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
         </head>
 <body class="min-h-screen text-slate-800 antialiased py-8 px-4 sm:px-6 lg:px-8">
 
@@ -1010,6 +1011,7 @@
 
                 <!-- Submit Button -->
                     <div class="pt-4 border-t border-slate-200">
+                        <div id="tsBox" class="no-print flex justify-center mb-3"></div>
                         <button type="submit" class="w-full sm:w-auto px-8 py-3.5 bg-brand-600 hover:bg-brand-700 text-white font-bold rounded-xl shadow-lg hover:shadow-brand-500/30 transition-all duration-200 flex items-center justify-center gap-2 mx-auto text-base">
                             <i class="fa-solid fa-paper-plane"></i> Simpan & Tampilkan Review
                         </button>
@@ -1377,6 +1379,37 @@
         let submissionId = null;
         
         const API_URL = "https://script.google.com/macros/s/AKfycbwnX680ihHaIcaOvo5Rm6IcBNaWYwAdCUFwhMNmYyrXmQHRNi9knd8GQVlKTgrpH4nKCw/exec";
+                // ===== Cloudeflare Turnstile =====
+                const TS_SITEKEY = "0x4AAAAAAAxxxxxxxxxxxxxx";      // kunci TES. Ganti dengan Site Key asli nanti.
+                let tsWidgetId = null, tsResolve = null, tsReject = null;
+
+                function initTurnstile() {
+                    if (!window.turnstile || tsWidgetId !== null) return;
+                    tsWidgetId = turnstile.render('#tsBox', {
+                        sitekey: TS_SITEKEY,
+                        execution: 'execute',               // baru jalan saat tombol sumbit ditekan
+                        appearance: 'interaction-only',     // kotak hanya muncul jika perlu
+                        callback: function (t) { if (tsResolve) tsResolve(t); },
+                        'error-callback': function () { if (tsReject) tsReject(new Error('captcha-error')); },
+                        'timeout-callback': function () { if (tsReject) tsReject(new Error('captcha-timeout')); },
+                    });
+                }
+                window.addEventListener('load', function() {
+                    const w = setInterval(function(){
+                        if (window.turnstile) { clearInterval(w); initTurnstile(); }
+                    }, 200);
+                });
+            
+                // Token berlaku 5 menit dan sekali pakai, jadi diminta TEPAT sebelum dikirim 
+                function getCaptchaToken() {
+                    return new Promise(function (resolve, reject) {
+                    if (!window.turnstile || tsWidgetId === null) return reject(new Error('captcha-not-ready'));
+                    tsResolve = resolve; tsReject = reject;
+                    turnstile.reset(tsWidgetId);
+                    turnstile.execute(tsWidgetId);
+                    setTimeout(function () { reject(new Error('captcha-timeout')); }, 60000);
+                    });
+                }
         async function kirimKeMasterData(data) {
             lastPayload = data;
             const ctrl = new AbortController();
@@ -1788,10 +1821,21 @@
                 pe.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 return;
             }
+
+            let captchaToken = '';
+            try {
+                captchaToken = await getCaptchaToken();
+            } catch (e) {
+                isSubmitting = false;
+                alert('Verifikasi keamanan gagal. Muat ulang halaman atau coba lagi.');
+                return;
+            }
+            
             tampilStatus('loading');
 
 kirimKeMasterData({
     submissionId: submissionId,
+    captchaToken: captchaToken,
     namaLengkap: fullName,
     nik: nik,
     tempatLahir: birthPlace,
@@ -2016,6 +2060,7 @@ kirimKeMasterData({
         async function kirimUlang() {
             if (!lastPayload) return;
             tampilStatus('loading');
+            try { lastPayload.captchaToken = await getCaptchaToken(); } catch (e) {}
             const ok = await kirimKeMasterData(lastPayload);
             tampilStatus(ok ? 'ok' : 'gagal');
         }
